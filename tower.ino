@@ -115,21 +115,22 @@ void loop()
 void ShootUp()
 {
   static long pos = 0;
-  static uint8_t increment = 3;
 
   fill_solid( &(leds0[0]), NUM_LEDS, CRGB::Black );
   fill_solid( &(leds1[0]), NUM_LEDS, CRGB::Black );
   fill_solid( &(leds2[0]), NUM_LEDS, CRGB::Black );
   fill_solid( &(leds3[0]), NUM_LEDS, CRGB::Black );
 
-  fill_solid(&(leds0[ pos ]), 10, CRGB::Red);
-  fill_solid(&(leds1[ pos ]), 10, CRGB::Red);
-  fill_solid(&(leds2[ pos ]), 10, CRGB::Red);
-  fill_solid(&(leds3[ pos ]), 10, CRGB::Red);
+  fill_solid(&(leds0[ pos ]), 10, CRGB::Green);
+  fill_solid(&(leds1[ pos ]), 10, CRGB::Green);
+  fill_solid(&(leds2[ pos ]), 10, CRGB::Green);
+  fill_solid(&(leds3[ pos ]), 10, CRGB::Green);
 
-  pos = (pos + increment) % (NUM_LEDS - 10);
-  increment++;
-  if (pos < 10) increment = 3;
+  pos += 10;
+  if (pos > NUM_LEDS - 10)
+  {
+    pos = 0;
+  }
   
   FastLED.show();
   delay(1);
