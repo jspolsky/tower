@@ -8,11 +8,7 @@
 
 bool gReverseDirection = false;
 
-CRGB leds0[NUM_LEDS];
-CRGB leds1[NUM_LEDS];
-CRGB leds2[NUM_LEDS];
-CRGB leds3[NUM_LEDS];
-
+CRGB leds[4][NUM_LEDS];
 
 
 int DebugPrintf(char* pszFmt, ... ) {
@@ -96,10 +92,10 @@ void setup()
   
   delay(3000); // ?
   
-  FastLED.addLeds<CHIPSET, 5, COLOR_ORDER>(leds0, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, 6, COLOR_ORDER>(leds1, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, 12, COLOR_ORDER>(leds2, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, 9, COLOR_ORDER>(leds3, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, 5, COLOR_ORDER>(leds[0], NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, 6, COLOR_ORDER>(leds[1], NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, 12, COLOR_ORDER>(leds[2], NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, 9, COLOR_ORDER>(leds[3], NUM_LEDS).setCorrection( TypicalLEDStrip );
   
   FastLED.setBrightness( BRIGHTNESS );
 
@@ -116,15 +112,11 @@ void ShootUp()
 {
   static long pos = 0;
 
-  fill_solid( &(leds0[0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds1[0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds2[0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds3[0]), NUM_LEDS, CRGB::Black );
-
-  fill_solid(&(leds0[ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds1[ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds2[ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds3[ pos ]), 10, CRGB::Green);
+  for (int i=0; i<4; i++)
+  {
+    fill_solid( &(leds[i][0]), NUM_LEDS, CRGB::Black );
+    fill_solid(&(leds[i][ pos ]), 10, CRGB::Green);
+  }
 
   pos += 10;
   if (pos > NUM_LEDS - 10)
