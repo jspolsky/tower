@@ -1,25 +1,22 @@
 #include "tower.h"
 
 
-IRrecvPCI myReceiver(4); //create receiver and pass pin number
-IRdecode myDecoder;   //create decoder
-
+#define PIN_LED_STRIP_1 5
+#define PIN_LED_STRIP_2 6
+#define PIN_LED_STRIP_3 12
+#define PIN_LED_STRIP_4 9
+#define PIN_IR_RECEIVER 4
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2812B
 #define NUM_LEDS    450
-static uint8_t BRIGHTNESS = 255;
-#define FRAMES_PER_SECOND 60
 
-static CRGB pride_colors_rgb[6] = { CRGB(118, 0, 137), CRGB(0, 68, 255), CRGB(0, 129, 31), CRGB(255, 239, 0), CRGB(255, 140, 0),  CRGB(231, 0, 0) }; 
+static CRGB pride_colors_rgb[6] = { CRGB(118, 0, 137), CRGB(0, 68, 255), CRGB(0, 129, 31), 
+                                    CRGB(255, 239, 0), CRGB(255, 140, 0),  CRGB(231, 0, 0) }; 
 
-bool gReverseDirection = false;
-
-CRGB leds[4][NUM_LEDS];
-
-
-
-
-
+IRrecvPCI myReceiver(PIN_IR_RECEIVER); // IR receiver
+IRdecode myDecoder;                    // IR decoder
+CRGB leds[4][NUM_LEDS];                // 4 LED strips. Numbered 0-3 internally but 1-4 externally.
+static uint8_t brightness = 255;
 
 void setup() 
 {
@@ -29,12 +26,12 @@ void setup()
   myReceiver.enableIRIn(); // Start the receiver
   Serial.println(F("Ready to receive IR signals"));
   
-  FastLED.addLeds<CHIPSET, 5, COLOR_ORDER>(leds[0], NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, 6, COLOR_ORDER>(leds[1], NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, 12, COLOR_ORDER>(leds[2], NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, 9, COLOR_ORDER>(leds[3], NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_LED_STRIP_1, COLOR_ORDER>(leds[0], NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_LED_STRIP_2, COLOR_ORDER>(leds[1], NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_LED_STRIP_3, COLOR_ORDER>(leds[2], NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_LED_STRIP_4, COLOR_ORDER>(leds[3], NUM_LEDS).setCorrection( TypicalLEDStrip );
   
-  FastLED.setBrightness( BRIGHTNESS );
+  FastLED.setBrightness( brightness );
 
 }
 
@@ -49,16 +46,16 @@ void loop()
     if (myDecoder.protocolNum == NEC) {
       switch(myDecoder.value) {
         case 0xFFC23D:
-          if (BRIGHTNESS < 250)
-            BRIGHTNESS += 15;
-            FastLED.setBrightness(BRIGHTNESS);
+          if (brightness < 255)
+            brightness += 10;
+            FastLED.setBrightness(brightness);
             FastLED.show();
           break;
 
         case 0xFF906F:
-          if (BRIGHTNESS > 5)
-            BRIGHTNESS -= 15;
-            FastLED.setBrightness(BRIGHTNESS);
+          if (brightness > 10)
+            brightness -= 10;
+            FastLED.setBrightness(brightness);
             FastLED.show();
           break;
         
