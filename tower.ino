@@ -16,7 +16,8 @@ static CRGB pride_colors_rgb[6] = { CRGB(118, 0, 137), CRGB(0, 68, 255), CRGB(0,
 IRrecvPCI myReceiver(PIN_IR_RECEIVER); // IR receiver
 IRdecode myDecoder;                    // IR decoder
 CRGB leds[4][NUM_LEDS];                // 4 LED strips. Numbered 0-3 internally but 1-4 externally.
-static uint8_t brightness = 255;
+uint8_t brightness = 255;
+bool standby = false;
 
 typedef void (*LOOPFUNC)(void);
 LOOPFUNC loopfunc;
@@ -56,7 +57,7 @@ void loop()
 
       uint32_t command = myDecoder.value;
      
-      if (command == IR_REPEAT && repeat_meaning) 
+      if (command == IR_REPEAT && repeat_meaning && repeat_meaning != IR_STANDBY) 
         command = repeat_meaning;
       
       switch(command)
@@ -88,8 +89,8 @@ void loop()
 
         case IR_STANDBY:
 
-          brightness = 0;
-          FastLED.setBrightness(brightness);
+          standby = !standby;
+          FastLED.setBrightness(standby ? 0 : brightness);
           break;
 
         case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
