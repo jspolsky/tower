@@ -112,15 +112,11 @@ void ShootUp()
 {
   static long pos = 0;
 
-  fill_solid( &(leds[0][0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds[1][0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds[2][0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds[3][0]), NUM_LEDS, CRGB::Black );
-
-  fill_solid(&(leds[0][ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds[1][ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds[2][ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds[3][ pos ]), 10, CRGB::Green);
+  for (int i=0; i<4; i++)
+  {
+    fill_solid( &(leds[i][0]), NUM_LEDS, CRGB::Black );
+    fill_solid(&(leds[i][ pos ]), 10, CRGB::Green);
+  }
 
   pos += 10;
   if (pos > NUM_LEDS - 10)
