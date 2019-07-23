@@ -22,9 +22,9 @@ void setup()
 {
 
   Serial.begin(9600);
-  delay(2000); while (!Serial); //delay for Leonardo
+  delay(2000); 
   myReceiver.enableIRIn(); // Start the receiver
-  Serial.println(F("Ready to receive IR signals"));
+
   
   FastLED.addLeds<CHIPSET, PIN_LED_STRIP_1, COLOR_ORDER>(leds[0], NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.addLeds<CHIPSET, PIN_LED_STRIP_2, COLOR_ORDER>(leds[1], NUM_LEDS).setCorrection( TypicalLEDStrip );
@@ -41,24 +41,45 @@ void loop()
   //Continue looping until you get a complete signal received
   if (myReceiver.getResults()) {
     myDecoder.decode();           //Decode it
-    myDecoder.dumpResults(false);  //Now print results. Use false for less detail
+//    myDecoder.dumpResults(false);  //Now print results. Use false for less detail
 
     if (myDecoder.protocolNum == NEC) {
       switch(myDecoder.value) {
-        case 0xFFC23D:
+
+        case IR_DIMMER_PLUS:  
+
           if (brightness < 255)
             brightness += 10;
             FastLED.setBrightness(brightness);
             FastLED.show();
           break;
+          
+        case IR_DIMMER_MINUS: 
 
-        case 0xFF906F:
           if (brightness > 10)
             brightness -= 10;
             FastLED.setBrightness(brightness);
             FastLED.show();
           break;
-        
+
+        case IR_STANDBY:      DebugPrintf("Unimplemented IR_STANDBY\n"); break;  
+        case IR_FULL_ON:      DebugPrintf("Unimplemented IR_FULL_ON\n"); break; 
+        case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
+        case IR_STROBE:       DebugPrintf("Unimplemented IR_STROBE\n");  break;
+        case IR_COLOR:        DebugPrintf("Unimplemented IR_COLOR\n");  break;
+        case IR_1:            DebugPrintf("Unimplemented IR_1\n");  break;
+        case IR_2:            DebugPrintf("Unimplemented IR_2\n");  break;
+        case IR_3:            DebugPrintf("Unimplemented IR_3\n");  break;
+        case IR_4:            DebugPrintf("Unimplemented IR_4\n");  break;
+        case IR_5:            DebugPrintf("Unimplemented IR_5\n");  break;
+        case IR_6:            DebugPrintf("Unimplemented IR_6\n");  break;
+        case IR_7:            DebugPrintf("Unimplemented IR_7\n");  break;
+        case IR_8:            DebugPrintf("Unimplemented IR_8\n");  break;
+        case IR_9:            DebugPrintf("Unimplemented IR_9\n");  break;
+        case IR_SOUND_ON:     DebugPrintf("Unimplemented IR_SOUND_ON\n");  break;
+        case IR_SHOW_0:       DebugPrintf("Unimplemented IR_SHOW_0\n");  break;
+        case IR_SOUND_OFF:    DebugPrintf("Unimplemented IR_SOUND_OFF\n");  break;
+        case IR_REPEAT:       DebugPrintf("Unimplemented IR_REPEAT\n");  break;
       }
     }
     
