@@ -6,6 +6,8 @@
 #define BRIGHTNESS  255
 #define FRAMES_PER_SECOND 60
 
+static CRGB pride_colors_rgb[6] = { CRGB(118, 0, 137), CRGB(0, 68, 255), CRGB(0, 129, 31), CRGB(255, 239, 0), CRGB(255, 140, 0),  CRGB(231, 0, 0) }; 
+
 bool gReverseDirection = false;
 
 CRGB leds[4][NUM_LEDS];
@@ -103,7 +105,18 @@ void setup()
 
 void loop()
 {
-  ShootUp();
+  Rainbow(pride_colors_rgb, 6);
+}
+
+void Rainbow(CRGB colors[], int number_of_colors)
+{
+  for (int x=0; x < number_of_colors; x++) {
+    for (int i=0; i<4; i++)
+    {
+      fill_solid(&(leds[i][ (NUM_LEDS / number_of_colors) * x ]), 75, colors[x]);
+    }
+  }
+  FastLED.show();
 }
 
 
