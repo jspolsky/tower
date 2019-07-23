@@ -1,9 +1,14 @@
 #include <FastLED.h>
+#include "IRLibAll.h"
+
+
+IRrecvPCI myReceiver(4); //create receiver and pass pin number
+IRdecode myDecoder;   //create decoder
 
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2812B
 #define NUM_LEDS    450
-#define BRIGHTNESS  255
+static uint8_t BRIGHTNESS = 255;
 #define FRAMES_PER_SECOND 60
 
 static CRGB pride_colors_rgb[6] = { CRGB(118, 0, 137), CRGB(0, 68, 255), CRGB(0, 129, 31), CRGB(255, 239, 0), CRGB(255, 140, 0),  CRGB(231, 0, 0) }; 
@@ -91,8 +96,11 @@ int DebugPrintf(char* pszFmt, ... ) {
 
 void setup() 
 {
-  
-  delay(3000); // ?
+
+  Serial.begin(9600);
+  delay(2000); while (!Serial); //delay for Leonardo
+  myReceiver.enableIRIn(); // Start the receiver
+  Serial.println(F("Ready to receive IR signals"));
   
   FastLED.addLeds<CHIPSET, 5, COLOR_ORDER>(leds[0], NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.addLeds<CHIPSET, 6, COLOR_ORDER>(leds[1], NUM_LEDS).setCorrection( TypicalLEDStrip );
@@ -105,6 +113,35 @@ void setup()
 
 void loop()
 {
+  //IR: 
+  //Continue looping until you get a complete signal received
+  if (myReceiver.getResults()) {
+    myDecoder.decode();           //Decode it
+    myDecoder.dumpResults(false);  //Now print results. Use false for less detail
+
+    if (myDecoder.protocolNum == NEC) {
+      switch(myDecoder.value) {
+        case 0xFFC23D:
+          if (BRIGHTNESS < 250)
+            BRIGHTNESS += 15;
+            FastLED.setBrightness(BRIGHTNESS);
+            FastLED.show();
+          break;
+
+        case 0xFF906F:
+          if (BRIGHTNESS > 5)
+            BRIGHTNESS -= 15;
+            FastLED.setBrightness(BRIGHTNESS);
+            FastLED.show();
+          break;
+        
+      }
+    }
+    
+    myReceiver.enableIRIn();      //Restart receiver
+  }
+
+  // ShootUp();
   Rainbow(pride_colors_rgb, 6);
 }
 
