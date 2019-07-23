@@ -80,8 +80,18 @@ void loop()
           FastLED.setBrightness(brightness);
           break;
 
-        case IR_STANDBY:      DebugPrintf("Unimplemented IR_STANDBY\n"); break;  
-        case IR_FULL_ON:      DebugPrintf("Unimplemented IR_FULL_ON\n"); break; 
+        case IR_FULL_ON: 
+
+          brightness = 255;
+          FastLED.setBrightness(brightness);
+          break;
+
+        case IR_STANDBY:
+
+          brightness = 0;
+          FastLED.setBrightness(brightness);
+          break;
+
         case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
         case IR_STROBE:       DebugPrintf("Unimplemented IR_STROBE\n");  break;
         case IR_COLOR:        DebugPrintf("Unimplemented IR_COLOR\n");  break;
