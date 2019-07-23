@@ -18,8 +18,13 @@ IRdecode myDecoder;                    // IR decoder
 CRGB leds[4][NUM_LEDS];                // 4 LED strips. Numbered 0-3 internally but 1-4 externally.
 static uint8_t brightness = 255;
 
+typedef void (*LOOPFUNC)(void);
+LOOPFUNC loopfunc;
+
 void setup() 
 {
+
+  loopfunc = &SlowHueFade;
 
   Serial.begin(9600);
   delay(2000); 
@@ -37,29 +42,42 @@ void setup()
 
 void loop()
 {
-  //IR: 
-  //Continue looping until you get a complete signal received
-  if (myReceiver.getResults()) {
+  static uint32_t repeat_meaning = 0; 
+  
+  // IR
+  
+  if (myReceiver.getResults()) 
+  {
     myDecoder.decode();           //Decode it
-//    myDecoder.dumpResults(false);  //Now print results. Use false for less detail
+            //    myDecoder.dumpResults(false);  //Now print results. Use false for less detail
 
-    if (myDecoder.protocolNum == NEC) {
-      switch(myDecoder.value) {
+    if (myDecoder.protocolNum == NEC) 
+    {
 
+      uint32_t command = myDecoder.value;
+     
+      if (command == IR_REPEAT && repeat_meaning) 
+        command = repeat_meaning;
+      
+      switch(command)
+      {
+      
         case IR_DIMMER_PLUS:  
 
-          if (brightness < 255)
-            brightness += 10;
-            FastLED.setBrightness(brightness);
-            FastLED.show();
+          if (brightness < 20)
+            brightness++;
+          else
+            brightness = min(255, brightness + 10);
+          FastLED.setBrightness(brightness);
           break;
           
         case IR_DIMMER_MINUS: 
 
-          if (brightness > 10)
-            brightness -= 10;
-            FastLED.setBrightness(brightness);
-            FastLED.show();
+          if (brightness < 20)
+            brightness = max(1, brightness - 1);
+          else
+            brightness = brightness - 10;
+          FastLED.setBrightness(brightness);
           break;
 
         case IR_STANDBY:      DebugPrintf("Unimplemented IR_STANDBY\n"); break;  
@@ -67,38 +85,41 @@ void loop()
         case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
         case IR_STROBE:       DebugPrintf("Unimplemented IR_STROBE\n");  break;
         case IR_COLOR:        DebugPrintf("Unimplemented IR_COLOR\n");  break;
-        case IR_1:            DebugPrintf("Unimplemented IR_1\n");  break;
-        case IR_2:            DebugPrintf("Unimplemented IR_2\n");  break;
-        case IR_3:            DebugPrintf("Unimplemented IR_3\n");  break;
-        case IR_4:            DebugPrintf("Unimplemented IR_4\n");  break;
+        
+        case IR_1:            loopfunc = &SlowHueFade;  break;
+        case IR_2:            loopfunc = &QuickHueFade; break;
+        case IR_3:            loopfunc = &Rainbow;  break;
+        case IR_4:            loopfunc = &ShootUp;  break;
         case IR_5:            DebugPrintf("Unimplemented IR_5\n");  break;
         case IR_6:            DebugPrintf("Unimplemented IR_6\n");  break;
         case IR_7:            DebugPrintf("Unimplemented IR_7\n");  break;
         case IR_8:            DebugPrintf("Unimplemented IR_8\n");  break;
         case IR_9:            DebugPrintf("Unimplemented IR_9\n");  break;
+        
         case IR_SOUND_ON:     DebugPrintf("Unimplemented IR_SOUND_ON\n");  break;
         case IR_SHOW_0:       DebugPrintf("Unimplemented IR_SHOW_0\n");  break;
         case IR_SOUND_OFF:    DebugPrintf("Unimplemented IR_SOUND_OFF\n");  break;
-        case IR_REPEAT:       DebugPrintf("Unimplemented IR_REPEAT\n");  break;
+
       }
+      repeat_meaning = command;
     }
     
     myReceiver.enableIRIn();      //Restart receiver
   }
 
-  // ShootUp();
-  Rainbow(pride_colors_rgb, 6);
+  (*loopfunc)();
 }
 
-void Rainbow(CRGB colors[], int number_of_colors)
+void Rainbow()
 {
-  for (int x=0; x < number_of_colors; x++) {
+  for (int x=0; x < 6; x++) {
     for (int i=0; i<4; i++)
     {
-      fill_solid(&(leds[i][ (NUM_LEDS / number_of_colors) * x ]), 75, colors[x]);
+      fill_solid(&(leds[i][ (NUM_LEDS / 6) * x ]), NUM_LEDS / 6, pride_colors_rgb[x]);
     }
   }
   FastLED.show();
+  delay(1);
 }
 
 
@@ -112,13 +133,13 @@ void ShootUp()
   fill_solid( &(leds[2][0]), NUM_LEDS, CRGB::Black );
   fill_solid( &(leds[3][0]), NUM_LEDS, CRGB::Black );
 
-  fill_solid(&(leds[0][ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds[1][ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds[2][ pos ]), 10, CRGB::Green);
-  fill_solid(&(leds[3][ pos ]), 10, CRGB::Green);
+  fill_solid(&(leds[0][ pos ]), 25, CRGB::Green);
+  fill_solid(&(leds[1][ pos ]), 25, CRGB::Green);
+  fill_solid(&(leds[2][ pos ]), 25, CRGB::Green);
+  fill_solid(&(leds[3][ pos ]), 25, CRGB::Green);
 
   pos += 10;
-  if (pos > NUM_LEDS - 10)
+  if (pos > NUM_LEDS - 25)
   {
     pos = 0;
   }

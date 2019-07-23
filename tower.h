@@ -35,4 +35,10 @@
 #define IR_REPEAT       0xFFFFFFFF
 
 
+void SlowHueFade(void);
+void QuickHueFade(void);
+void ShootUp(void);
+void Rainbow(void);
+
+
 #endif
