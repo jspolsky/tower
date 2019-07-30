@@ -39,6 +39,9 @@ void SlowHueFade(void);
 void QuickHueFade(void);
 void ShootUp(void);
 void Rainbow(void);
+void SineWave(void);
+
+
 
 
 #endif

@@ -20,6 +20,8 @@ CRGB leds[4][NUM_LEDS];                // 4 LED strips. Numbered 0-3 internally 
 uint8_t brightness = 255;
 uint8_t color_index = 0;
 bool standby = false;
+uint8_t blinky_lights_at_top = 1;     // 0 - no blinky lights 
+                                      // 1 - yes blinky lights, they are on now 2- yes blinky lights, they are off now
 
 typedef void (*LOOPFUNC)(void);
 LOOPFUNC loopfunc;
@@ -59,7 +61,7 @@ void loop()
 
       uint32_t command = myDecoder.value;
      
-      if (command == IR_REPEAT && repeat_meaning && repeat_meaning != IR_STANDBY) 
+      if (command == IR_REPEAT && repeat_meaning && repeat_meaning != IR_STANDBY && repeat_meaning != IR_STROBE) 
         command = repeat_meaning;
       
       switch(command)
@@ -96,7 +98,11 @@ void loop()
           break;
 
         case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
-        case IR_STROBE:       DebugPrintf("Unimplemented IR_STROBE\n");  break;
+        case IR_STROBE:       if (blinky_lights_at_top) 
+                                blinky_lights_at_top = 0;
+                              else
+                                blinky_lights_at_top = 1;  
+                              break;
         case IR_COLOR:        color_index = (color_index + 1) % NUM_COLORS;  break;
         
         case IR_1:            loopfunc = &SlowHueFade;  break;
@@ -114,6 +120,7 @@ void loop()
         case IR_SOUND_OFF:    DebugPrintf("Unimplemented IR_SOUND_OFF\n");  break;
 
       }
+      
       repeat_meaning = command;
     }
     
@@ -121,6 +128,31 @@ void loop()
   }
 
   (*loopfunc)();
+
+  if (blinky_lights_at_top)
+  {
+    EVERY_N_SECONDS(1)
+    {
+      if (blinky_lights_at_top == 1)
+      {
+        blinky_lights_at_top = 2;      
+      }
+      else
+      {
+        blinky_lights_at_top = 1;
+      }
+    }
+    
+    if (blinky_lights_at_top == 1)
+    {
+      for (int i = 0; i < 4; i++)
+      {
+        fill_solid(&(leds[i][NUM_LEDS - 4]), 4, CRGB::Red);
+      }
+    }
+  }
+
+  FastLED.show();
 }
 
 void Rainbow()
@@ -131,7 +163,6 @@ void Rainbow()
       fill_solid(&(leds[i][ (NUM_LEDS / 6) * x ]), NUM_LEDS / 6, pride_colors_rgb[x]);
     }
   }
-  FastLED.show();
   delay(1);
 }
 
@@ -141,23 +172,19 @@ void ShootUp()
 {
   static long pos = 0;
 
-  fill_solid( &(leds[0][0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds[1][0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds[2][0]), NUM_LEDS, CRGB::Black );
-  fill_solid( &(leds[3][0]), NUM_LEDS, CRGB::Black );
+  for (int i=0; i<4; i++)
+  {
+    fill_solid( &(leds[i][0]), NUM_LEDS, CRGB::Black );
+    fill_solid(&(leds[i][ pos ]), 50, pride_colors_rgb[color_index]);
+  }
 
-  fill_solid(&(leds[0][ pos ]), 25, CRGB::Green);
-  fill_solid(&(leds[1][ pos ]), 25, CRGB::Green);
-  fill_solid(&(leds[2][ pos ]), 25, CRGB::Green);
-  fill_solid(&(leds[3][ pos ]), 25, CRGB::Green);
-
-  pos += 10;
-  if (pos > NUM_LEDS - 25)
+  pos += 20;
+  
+  if (pos > NUM_LEDS - 50)
   {
     pos = 0;
   }
   
-  FastLED.show();
   delay(1);
   
 }
@@ -167,7 +194,12 @@ void QuickHueFade()
 {
   static uint8_t hue = 0;
   hue += 3;
-  FastLED.showColor(CHSV(hue, 255, 255)); 
+
+  for (int i=0; i < 4; i++)
+  {
+    fill_solid(&(leds[i][0]), NUM_LEDS, CHSV(hue, 255, 255));
+  }
+  
   delay(1);
 }
 
@@ -175,7 +207,10 @@ void QuickHueFade()
 void SlowHueFade()
 {
   static uint8_t hue = 0;
-  FastLED.showColor(CHSV(hue++, 255, 255)); 
+  for (int i=0; i < 4; i++)
+  {
+    fill_solid(&(leds[i][0]), NUM_LEDS, CHSV(hue++, 255, 255));
+  }
   delay(100);
 }
 
@@ -199,8 +234,6 @@ void SineWave()
                                                    : 255 - j * 256 / BLOB_HEIGHT);
     }
   }
-  FastLED.show();
-
 
   delay(1);
 
