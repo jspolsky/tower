@@ -9,14 +9,16 @@
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2812B
 #define NUM_LEDS    450
+#define NUM_COLORS 7
 
-static CRGB pride_colors_rgb[6] = { CRGB(118, 0, 137), CRGB(0, 68, 255), CRGB(0, 129, 31), 
-                                    CRGB(255, 239, 0), CRGB(255, 140, 0),  CRGB(231, 0, 0) }; 
+static CRGB pride_colors_rgb[NUM_COLORS] = { CRGB(118, 0, 137), CRGB(0, 68, 255), CRGB(0, 129, 31), 
+                                    CRGB(255, 239, 0), CRGB(255, 140, 0),  CRGB(231, 0, 0), CRGB(255, 255, 255) }; 
 
 IRrecvPCI myReceiver(PIN_IR_RECEIVER); // IR receiver
 IRdecode myDecoder;                    // IR decoder
 CRGB leds[4][NUM_LEDS];                // 4 LED strips. Numbered 0-3 internally but 1-4 externally.
 uint8_t brightness = 255;
+uint8_t color_index = 0;
 bool standby = false;
 
 typedef void (*LOOPFUNC)(void);
@@ -25,9 +27,9 @@ LOOPFUNC loopfunc;
 void setup() 
 {
 
-  loopfunc = &SlowHueFade;
+  loopfunc = &SineWave;
 
-  Serial.begin(9600);
+  Serial.begin(250000);
   delay(2000); 
   myReceiver.enableIRIn(); // Start the receiver
 
@@ -95,13 +97,13 @@ void loop()
 
         case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
         case IR_STROBE:       DebugPrintf("Unimplemented IR_STROBE\n");  break;
-        case IR_COLOR:        DebugPrintf("Unimplemented IR_COLOR\n");  break;
+        case IR_COLOR:        color_index = (color_index + 1) % NUM_COLORS;  break;
         
         case IR_1:            loopfunc = &SlowHueFade;  break;
         case IR_2:            loopfunc = &QuickHueFade; break;
         case IR_3:            loopfunc = &Rainbow;  break;
         case IR_4:            loopfunc = &ShootUp;  break;
-        case IR_5:            DebugPrintf("Unimplemented IR_5\n");  break;
+        case IR_5:            loopfunc = &SineWave;  break;
         case IR_6:            DebugPrintf("Unimplemented IR_6\n");  break;
         case IR_7:            DebugPrintf("Unimplemented IR_7\n");  break;
         case IR_8:            DebugPrintf("Unimplemented IR_8\n");  break;
@@ -175,4 +177,33 @@ void SlowHueFade()
   static uint8_t hue = 0;
   FastLED.showColor(CHSV(hue++, 255, 255)); 
   delay(100);
+}
+
+void SineWave()
+{
+  const uint16_t BLOB_HEIGHT = 50;
+  static uint16_t theta = 0;
+
+  int16_t sin_theta = scale16( 32767 + sin16_avr( theta ), NUM_LEDS - BLOB_HEIGHT );
+  bool direction = cos16( theta ) < 0;
+  
+  theta+=1000;
+
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    fill_solid( &(leds[i][0]), NUM_LEDS, CRGB::Black );
+    fill_solid( &(leds[i][sin_theta]), BLOB_HEIGHT, pride_colors_rgb[color_index]);
+    for (int j = 0; j < BLOB_HEIGHT; j++)
+    {
+      leds[i][sin_theta + j].fadeLightBy(direction ? j * 256 / BLOB_HEIGHT
+                                                   : 255 - j * 256 / BLOB_HEIGHT);
+    }
+  }
+  FastLED.show();
+
+
+  delay(1);
+
+  
+ 
 }
