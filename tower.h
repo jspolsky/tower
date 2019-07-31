@@ -41,6 +41,8 @@ void ShootUp(void);
 void Rainbow(void);
 void SineWave(void);
 void Rotate(void);
+void Multihue(void);
+
 
 
 

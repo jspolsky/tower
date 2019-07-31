@@ -29,7 +29,9 @@ LOOPFUNC loopfunc;
 void setup() 
 {
 
-  loopfunc = &SineWave;
+  randomSeed(analogRead(0));
+
+  loopfunc = &Multihue;
 
   Serial.begin(250000);
   delay(2000); 
@@ -111,7 +113,7 @@ void loop()
         case IR_4:            loopfunc = &ShootUp;  break;
         case IR_5:            loopfunc = &SineWave;  break;
         case IR_6:            loopfunc = &Rotate;  break;
-        case IR_7:            DebugPrintf("Unimplemented IR_7\n");  break;
+        case IR_7:            loopfunc = &Multihue;  break;
         case IR_8:            DebugPrintf("Unimplemented IR_8\n");  break;
         case IR_9:            DebugPrintf("Unimplemented IR_9\n");  break;
         
@@ -266,4 +268,38 @@ void Rotate()
 
     fill_solid(&(leds[i][0]), NUM_LEDS, rgbColor);
   }
+}
+
+
+void Multihue()
+{
+  static uint8_t hue = 0;
+  static long pushing = 0;
+  static long pushing_growth = 1;
+
+  // push in a random amount of new hue
+  long amt = random( pushing );
+  pushing += (pushing_growth++);
+
+  if (pushing > 200)
+  {
+    for (int i = 0; i < 4; i++)
+      fill_solid(&(leds[i][0]), NUM_LEDS, CRGB::Black);
+
+    pushing = 0;
+    pushing_growth = 1;
+  }
+  else
+  {
+  
+    for (int i = 0; i < 4; i++)
+    {
+      // shift up everything by amt
+      memmove( &(leds[i][amt]), &(leds[i][0]), (NUM_LEDS - amt) * sizeof(CRGB) );
+      fill_solid(&(leds[i][0]), amt, CHSV(hue, 255, 255));
+    }
+  }
+
+  hue+=10;
+
 }
