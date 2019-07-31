@@ -40,7 +40,7 @@ void QuickHueFade(void);
 void ShootUp(void);
 void Rainbow(void);
 void SineWave(void);
-
+void Rotate(void);
 
 
 

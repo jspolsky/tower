@@ -61,7 +61,7 @@ void loop()
 
       uint32_t command = myDecoder.value;
      
-      if (command == IR_REPEAT && repeat_meaning && repeat_meaning != IR_STANDBY && repeat_meaning != IR_STROBE) 
+      if (command == IR_REPEAT && repeat_meaning && repeat_meaning != IR_STANDBY && repeat_meaning != IR_STROBE && repeat_meaning != IR_COLOR) 
         command = repeat_meaning;
       
       switch(command)
@@ -110,7 +110,7 @@ void loop()
         case IR_3:            loopfunc = &Rainbow;  break;
         case IR_4:            loopfunc = &ShootUp;  break;
         case IR_5:            loopfunc = &SineWave;  break;
-        case IR_6:            DebugPrintf("Unimplemented IR_6\n");  break;
+        case IR_6:            loopfunc = &Rotate;  break;
         case IR_7:            DebugPrintf("Unimplemented IR_7\n");  break;
         case IR_8:            DebugPrintf("Unimplemented IR_8\n");  break;
         case IR_9:            DebugPrintf("Unimplemented IR_9\n");  break;
@@ -153,6 +153,7 @@ void loop()
   }
 
   FastLED.show();
+  delay(1);
 }
 
 void Rainbow()
@@ -163,7 +164,7 @@ void Rainbow()
       fill_solid(&(leds[i][ (NUM_LEDS / 6) * x ]), NUM_LEDS / 6, pride_colors_rgb[x]);
     }
   }
-  delay(1);
+
 }
 
 
@@ -185,8 +186,6 @@ void ShootUp()
     pos = 0;
   }
   
-  delay(1);
-  
 }
 
 
@@ -200,7 +199,6 @@ void QuickHueFade()
     fill_solid(&(leds[i][0]), NUM_LEDS, CHSV(hue, 255, 255));
   }
   
-  delay(1);
 }
 
 
@@ -235,8 +233,37 @@ void SineWave()
     }
   }
 
-  delay(1);
+}
 
-  
- 
+static uint8_t rgfade[8] = {0, 64, 128, 192, 224, 240, 248, 252 };
+
+void Rotate()
+{
+  static uint8_t t = 0; // 0 -> 31 time interval cycle of where the light should be pointed
+  CRGB rgbColor;
+
+  EVERY_N_MILLIS(25)
+  {
+    t = (t + 1) % 32;
+  }
+
+  for (int i = 0; i < 4; i++)
+  {
+    CRGB rgbColor = CRGB::Black;
+    
+    int peak = i * 8;             // the position where the light should be max brightness
+    int dist = abs(t - peak);     // the distance from the peak
+
+    if (i == 0 && t > 24)
+      dist = 32 - t;              // special case for the first strip so it wraps around
+
+    if (dist < 8)
+    {
+      rgbColor = pride_colors_rgb[color_index];
+      // dim it by the distance from 8
+      rgbColor.fadeLightBy(rgfade[dist]);
+    }
+
+    fill_solid(&(leds[i][0]), NUM_LEDS, rgbColor);
+  }
 }
