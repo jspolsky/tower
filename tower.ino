@@ -3,8 +3,8 @@
 
 #define PIN_LED_STRIP_1 5
 #define PIN_LED_STRIP_2 6
-#define PIN_LED_STRIP_3 12
-#define PIN_LED_STRIP_4 9
+#define PIN_LED_STRIP_3 9
+#define PIN_LED_STRIP_4 12
 #define PIN_IR_RECEIVER 4
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2812B
@@ -110,11 +110,11 @@ void loop()
         case IR_1:            loopfunc = &SlowHueFade;  break;
         case IR_2:            loopfunc = &QuickHueFade; break;
         case IR_3:            loopfunc = &Rainbow;  break;
-        case IR_4:            loopfunc = &ShootUp;  break;
+        case IR_4:            loopfunc = &ColorSineWave;  break;
         case IR_5:            loopfunc = &SineWave;  break;
         case IR_6:            loopfunc = &Rotate;  break;
         case IR_7:            loopfunc = &Multihue;  break;
-        case IR_8:            DebugPrintf("Unimplemented IR_8\n");  break;
+        case IR_8:            loopfunc = &Fireworks;  break;
         case IR_9:            DebugPrintf("Unimplemented IR_9\n");  break;
         
         case IR_SOUND_ON:     DebugPrintf("Unimplemented IR_SOUND_ON\n");  break;
@@ -234,7 +234,31 @@ void SineWave()
                                                    : 255 - j * 256 / BLOB_HEIGHT);
     }
   }
+}
 
+void ColorSineWave()
+{
+  const uint16_t BLOB_HEIGHT = 50;
+  static uint16_t theta = 0;
+  static uint8_t hue = 0;
+
+  int16_t sin_theta = scale16( 32767 + sin16_avr( theta ), NUM_LEDS - BLOB_HEIGHT );
+  bool direction = cos16( theta ) < 0;
+  
+  theta+=1000;
+
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    fill_solid( &(leds[i][0]), NUM_LEDS, CRGB::Black );
+    fill_solid( &(leds[i][sin_theta]), BLOB_HEIGHT, CHSV(hue, 255, 255));
+    for (int j = 0; j < BLOB_HEIGHT; j++)
+    {
+      leds[i][sin_theta + j].fadeLightBy(direction ? j * 256 / BLOB_HEIGHT
+                                                   : 255 - j * 256 / BLOB_HEIGHT);
+    }
+  }
+
+  hue++;
 }
 
 static uint8_t rgfade[8] = {0, 64, 128, 192, 224, 240, 248, 252 };
@@ -276,30 +300,108 @@ void Multihue()
   static uint8_t hue = 0;
   static long pushing = 0;
   static long pushing_growth = 1;
+  static long fade_mode = 0;    // when > 0, fade to black
 
-  // push in a random amount of new hue
-  long amt = random( pushing );
-  pushing += (pushing_growth++);
-
-  if (pushing > 200)
+  if (fade_mode)
   {
     for (int i = 0; i < 4; i++)
-      fill_solid(&(leds[i][0]), NUM_LEDS, CRGB::Black);
+      for (int j = 0; j < NUM_LEDS; j++)
+        leds[i][j].fadeToBlackBy( 32 );
 
-    pushing = 0;
-    pushing_growth = 1;
+
+    fade_mode--;
+    if (fade_mode == 0)
+    {
+      for (int i = 0; i < 4; i++)
+        fill_solid(&(leds[i][0]), NUM_LEDS, CRGB::Black);
+  
+      pushing = 0;
+      pushing_growth = 1;
+    }
   }
   else
   {
+    // push in a random amount of new hue
+    long amt = random( pushing );
+    pushing += (pushing_growth++);
   
-    for (int i = 0; i < 4; i++)
+    if (pushing > 200)
     {
-      // shift up everything by amt
-      memmove( &(leds[i][amt]), &(leds[i][0]), (NUM_LEDS - amt) * sizeof(CRGB) );
-      fill_solid(&(leds[i][0]), amt, CHSV(hue, 255, 255));
+      fade_mode = 25;
+    }
+    else
+    {
+    
+      for (int i = 0; i < 4; i++)
+      {
+        // shift up everything by amt
+        memmove( &(leds[i][amt]), &(leds[i][0]), (NUM_LEDS - amt) * sizeof(CRGB) );
+        fill_solid(&(leds[i][0]), amt, CHSV(hue, 255, 255));
+      }
+    }
+  
+    hue+=10;
+  }
+}
+
+void Fireworks(void)
+{
+  static uint8_t hue = 0;
+  static long pushing = 0;
+  static long pushing_growth = 1;
+  static long firework_center = random( 25, NUM_LEDS - 25 );
+  static long amt_total = 0;
+  static long fade_mode = 0;    // when > 0, fade to black
+
+  if (fade_mode)
+  {
+    for (int i = 0; i < 4; i++)
+      for (int j = 0; j < NUM_LEDS; j++)
+        if (random(10) == 0) leds[i][j] = CRGB::Black;
+
+    fade_mode--;
+    if (fade_mode == 0)
+    {
+      for (int i = 0; i < 4; i++)
+        fill_solid(&(leds[i][0]), NUM_LEDS, CRGB::Black);
+  
+      pushing = 0;
+      pushing_growth = 1;
+      amt_total = 0;
+      firework_center = random( 25, NUM_LEDS - 25 );  
     }
   }
+  else
+  {
 
-  hue+=10;
+    // how much new hue do we want to push in?
+    long amt = random( pushing );
+  
+    // will that fit?
+    if (amt_total + amt + firework_center >= NUM_LEDS ||
+        firework_center - amt_total - amt < 0 ||
+        amt_total > 40)
+    {
+      // NO!
+      fade_mode = 25;
+    }
+    else
+    {
+      pushing += (pushing_growth++);
+  
+      for (int i = 0; i < 4; i++)
+      {
+        // shift up out by amt
+        memmove( &(leds[i][firework_center + amt]), &(leds[i][firework_center]), amt_total * sizeof(CRGB) );
+        memmove( &(leds[i][firework_center - amt_total - amt]), &(leds[i][firework_center - amt_total]), amt_total * sizeof(CRGB) );
+  
+        fill_solid(&(leds[i][firework_center - amt]), amt * 2, CHSV(hue, 255, 255));
+      }
+  
+      amt_total += amt;
+    }
 
+    hue += 15;
+  }
+ 
 }

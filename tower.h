@@ -40,9 +40,10 @@ void QuickHueFade(void);
 void ShootUp(void);
 void Rainbow(void);
 void SineWave(void);
+void ColorSineWave(void);
 void Rotate(void);
 void Multihue(void);
-
+void Fireworks(void);
 
 
 
