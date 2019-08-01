@@ -33,8 +33,8 @@ void setup()
 
   loopfunc = &Multihue;
 
-  Serial.begin(250000);
-  delay(2000); 
+  /* Serial.begin(250000);
+  delay(2000);  */
   myReceiver.enableIRIn(); // Start the receiver
 
   
@@ -99,7 +99,6 @@ void loop()
           FastLED.setBrightness(standby ? 0 : brightness);
           break;
 
-        case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
         case IR_STROBE:       if (blinky_lights_at_top) 
                                 blinky_lights_at_top = 0;
                               else
@@ -115,12 +114,14 @@ void loop()
         case IR_6:            loopfunc = &Rotate;  break;
         case IR_7:            loopfunc = &Multihue;  break;
         case IR_8:            loopfunc = &Fireworks;  break;
+
+/*        
         case IR_9:            DebugPrintf("Unimplemented IR_9\n");  break;
-        
         case IR_SOUND_ON:     DebugPrintf("Unimplemented IR_SOUND_ON\n");  break;
         case IR_SHOW_0:       DebugPrintf("Unimplemented IR_SHOW_0\n");  break;
         case IR_SOUND_OFF:    DebugPrintf("Unimplemented IR_SOUND_OFF\n");  break;
-
+        case IR_FADE:         DebugPrintf("Unimplemented IR_FADE\n");  break;
+*/
       }
       
       repeat_meaning = command;
